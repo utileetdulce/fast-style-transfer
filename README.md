@@ -11,6 +11,8 @@ This is a fork of [fast-style-transfer](https://github.com/lengstrom/fast-style-
 
 ### Setting up models
 
+Pre-trained models for [Picasso, Hokusai, Kandinsky, Liechtenstein, Wu Guanzhong, Ibrahim el-Salahi, and Google Maps](https://drive.google.com/open?id=0B3WXSfqxKDkFUFl3YllzS1ZqbkU).
+
 At the top of the file `run_webcam.py`, there are paths to model files and style images in the variable list `models`. They are not included in the repo because of space. If you'd like to use the pre-trained models referred to up there, these models may be [downloaded from this shared folder](https://drive.google.com/open?id=0B3WXSfqxKDkFUFl3YllzS1ZqbkU). To train your own, refer to the [original documentation](https://github.com/lengstrom/fast-style-transfer).
 
 ### Usage
