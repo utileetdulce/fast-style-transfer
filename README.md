@@ -25,6 +25,9 @@ There are three arguments:
  - `disp_width` is the width in pixels of the image to be shown on the screen. The restyled image is resized to this after being generated. Having `disp_width` > `width` lets you run the model more quickly but generate a bigger image of lesser quality.
  - `display_source` is whether or not to display the content image (webcam) and corresponding style image alongside the output image (1 by default, i.e. True)
 
+You can toggle between the different models by hitting the 'a' and 's' keys on your keyboard.
+
+
 ### Example
 
 ![stylized webcam](styles/stylenet_webcam.gif)
