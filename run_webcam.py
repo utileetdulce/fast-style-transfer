@@ -55,7 +55,7 @@ def make_triptych(disp_width, frame, style, output, horizontal=True):
 	ch, cw, _ = frame.shape
 	sh, sw, _ = style.shape
 	oh, ow, _ = output.shape
-	disp_height = disp_width * oh / ow
+	disp_height = int(disp_width * oh / ow)
 	h = int(ch * disp_width * 0.5 / cw)
 	w = int(cw * disp_height * 0.5 / ch)
 	if horizontal:
@@ -86,7 +86,7 @@ def main(width, disp_width, disp_source, horizontal):
 		img_shape = (height, width, 3)
 		batch_shape = (1,) + img_shape
 		print("batch shape", batch_shape)
-		print("disp source is ", display_source)
+		print("disp source is ", disp_source)
 		img_placeholder = tf.placeholder(tf.float32, shape=batch_shape, name='img_placeholder')
 		preds = transform.net(img_placeholder)
 		
@@ -107,7 +107,7 @@ def main(width, disp_width, disp_source, horizontal):
 			output = np.clip(output, 0, 255).astype(np.uint8)
 			output = cv2.resize(output, (width, height))
 
-      if disp_source:
+			if disp_source:
 				full_img = make_triptych(disp_width, frame, style, output, horizontal)
 				cv2.imshow('frame', full_img)
 			else:
