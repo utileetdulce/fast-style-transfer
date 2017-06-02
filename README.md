@@ -17,13 +17,14 @@ At the top of the file `run_webcam.py`, there are paths to model files and style
 
 ### Usage
 
-    python run_webcam.py --width 360 --disp_width 800 --display_source 1
+    python run_webcam.py --width 360 --disp_width 800 --disp_source 1 --horizontal 1
 
 There are three arguments:
 
  - `width` refers to the width in pixels of the image being restyled (the webcam will be scaled down or up to this size).  
  - `disp_width` is the width in pixels of the image to be shown on the screen. The restyled image is resized to this after being generated. Having `disp_width` > `width` lets you run the model more quickly but generate a bigger image of lesser quality.
- - `display_source` is whether or not to display the content image (webcam) and corresponding style image alongside the output image (1 by default, i.e. True)
+ - `disp_source` is whether or not to display the content image (webcam) and corresponding style image alongside the output image (1 by default, i.e. True)
+ - `horizontal` is whether to concatenate content/style with output image horizontally (1, which is default) or vertically (0). Only relevant if disp_source=1
 
 You can toggle between the different models by hitting the 'a' and 's' keys on your keyboard.
 

@@ -12,17 +12,23 @@ import cv2
 
 models=[{"ckpt":"models/ckpt_cubist_b20_e4_cw05/fns.ckpt", "style":"styles/cubist-landscape-justineivu-geanina.jpg"},
 	{"ckpt":"models/ckpt_hokusai_b20_e4_cw15/fns.ckpt", "style":"styles/hokusai.jpg"},
+	{"ckpt":"models/wave/wave.ckpt", "style":"styles/hokusai.jpg"},
 	{"ckpt":"models/ckpt_kandinsky_b20_e4_cw05/fns.ckpt", "style":"styles/kandinsky2.jpg"},
 	{"ckpt":"models/ckpt_liechtenstein_b20_e4_cw15/fns.ckpt", "style":"styles/liechtenstein.jpg"},
 	{"ckpt":"models/ckpt_maps3_b5_e2_cw10_tv1_02/fns.ckpt", "style":"styles/maps3.jpg"},
 	{"ckpt":"models/ckpt_wu_b20_e4_cw15/fns.ckpt", "style":"styles/wu4.jpg"},
-	{"ckpt":"models/ckpt_elsalahi_b20_e4_cw05/fns.ckpt", "style":"styles/elsalahi2.jpg"}]
+	{"ckpt":"models/ckpt_elsalahi_b20_e4_cw05/fns.ckpt", "style":"styles/elsalahi2.jpg"},
+	{"ckpt":"models/scream/scream.ckpt", "style":"styles/the_scream.jpg"},
+	{"ckpt":"models/udnie/udnie.ckpt", "style":"styles/udnie.jpg"},
+	{"ckpt":"models/ckpt_clouds_b5_e2_cw05_tv1_04/fns.ckpt", "style":"styles/clouds.jpg"}]
+
 
 # parser
 parser = argparse.ArgumentParser()
 parser.add_argument('--width', type=int, help='width to resize camera feed to (default 320)', required=False, default=320)
 parser.add_argument('--disp_width', type=int, help='width to display output (default 640)', required=False, default=640)
-parser.add_argument('--display_source', type=int, help='whether to display content and style images next to output, default 1', required=True, default=1)
+parser.add_argument('--disp_source', type=int, help='whether to display content and style images next to output, default 1', required=True, default=1)
+parser.add_argument('--horizontal', type=int, help='whether to concatenate horizontally (1) or vertically(0)', required=False, default=1)
 
 
 def load_checkpoint(checkpoint, sess):
@@ -36,16 +42,6 @@ def load_checkpoint(checkpoint, sess):
 		return False
 
 
-def make_triptych(disp_width, frame, style, output):
-	ch, cw, _ = frame.shape
-	sh, sw, _ = style.shape
-	oh, ow, _ = output.shape
-	h = int(ch * disp_width * 0.5 / cw)
-	full_img = np.concatenate([cv2.resize(frame, (int(0.5 * disp_width), h)), cv2.resize(style, (int(0.5 * disp_width), h))], axis=1)
-	full_img = np.concatenate([full_img, cv2.resize(output, (disp_width, disp_width * oh // ow))], axis=0)
-	return full_img
-
-
 def get_camera_shape(cam):
 	""" use a different syntax to get video size in OpenCV 2 and OpenCV 3 """
 	cv_version_major, _, _ = cv2.__version__.split('.')
@@ -53,19 +49,37 @@ def get_camera_shape(cam):
 		return cam.get(cv2.CAP_PROP_FRAME_WIDTH), cam.get(cv2.CAP_PROP_FRAME_HEIGHT)
 	else:
 		return cam.get(cv2.cv.CV_CAP_PROP_FRAME_WIDTH), cam.get(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT)
+  
+  
+def make_triptych(disp_width, frame, style, output, horizontal=True):
+	ch, cw, _ = frame.shape
+	sh, sw, _ = style.shape
+	oh, ow, _ = output.shape
+	disp_height = disp_width * oh / ow
+	h = int(ch * disp_width * 0.5 / cw)
+	w = int(cw * disp_height * 0.5 / ch)
+	if horizontal:
+		full_img = np.concatenate([
+			cv2.resize(frame, (int(w), int(0.5*disp_height))), 
+			cv2.resize(style, (int(w), int(0.5*disp_height)))], axis=0)
+		full_img = np.concatenate([full_img, cv2.resize(output, (disp_width, disp_height))], axis=1)
+	else:
+		full_img = np.concatenate([
+			cv2.resize(frame, (int(0.5 * disp_width), h)), 
+			cv2.resize(style, (int(0.5 * disp_width), h))], axis=1)
+		full_img = np.concatenate([full_img, cv2.resize(output, (disp_width, disp_width * oh // ow))], axis=0)
+	return full_img
 
 
-def main(width, disp_width, display_source):
+def main(width, disp_width, disp_source, horizontal):
 	idx_model = 0
 	device_t='/gpu:0'
 	g = tf.Graph()
 	soft_config = tf.ConfigProto(allow_soft_placement=True)
 	soft_config.gpu_options.allow_growth = True
 	with g.as_default(), g.device(device_t), tf.Session(config=soft_config) as sess:	
-		
 		cam = cv2.VideoCapture(0)
 		cam_width, cam_height = get_camera_shape(cam)
-
 		width = width if width % 4 == 0 else width + 4 - (width % 4) # must be divisible by 4
 		height = int(width * float(cam_height/cam_width))
 		height = height if height % 4 == 0 else height + 4 - (height % 4) # must be divisible by 4
@@ -92,8 +106,9 @@ def main(width, disp_width, display_source):
 			output = output[:, :, :, [2,1,0]].reshape(img_shape)
 			output = np.clip(output, 0, 255).astype(np.uint8)
 			output = cv2.resize(output, (width, height))
-			if display_source:
-				full_img = make_triptych(disp_width, frame, style, output)
+
+      if disp_source:
+				full_img = make_triptych(disp_width, frame, style, output, horizontal)
 				cv2.imshow('frame', full_img)
 			else:
 				oh, ow, _ = output.shape
@@ -121,5 +136,5 @@ def main(width, disp_width, display_source):
 
 if __name__ == '__main__':
 	opts = parser.parse_args()
-	main(opts.width, opts.disp_width, opts.display_source==1)
+	main(opts.width, opts.disp_width, opts.disp_source==1, opts.horizontal==1)
 
