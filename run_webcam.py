@@ -1,4 +1,6 @@
 from __future__ import print_function
+from __future__ import division
+
 import sys
 sys.path.insert(0, 'src')
 import argparse
@@ -40,6 +42,15 @@ def load_checkpoint(checkpoint, sess):
 		return False
 
 
+def get_camera_shape(cam):
+	""" use a different syntax to get video size in OpenCV 2 and OpenCV 3 """
+	cv_version_major, _, _ = cv2.__version__.split('.')
+	if cv_version_major == '3':
+		return cam.get(cv2.CAP_PROP_FRAME_WIDTH), cam.get(cv2.CAP_PROP_FRAME_HEIGHT)
+	else:
+		return cam.get(cv2.cv.CV_CAP_PROP_FRAME_WIDTH), cam.get(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT)
+  
+  
 def make_triptych(disp_width, frame, style, output, horizontal=True):
 	ch, cw, _ = frame.shape
 	sh, sw, _ = style.shape
@@ -56,7 +67,7 @@ def make_triptych(disp_width, frame, style, output, horizontal=True):
 		full_img = np.concatenate([
 			cv2.resize(frame, (int(0.5 * disp_width), h)), 
 			cv2.resize(style, (int(0.5 * disp_width), h))], axis=1)
-		full_img = np.concatenate([full_img, cv2.resize(output, (disp_width, disp_width * oh / ow))], axis=0)
+		full_img = np.concatenate([full_img, cv2.resize(output, (disp_width, disp_width * oh // ow))], axis=0)
 	return full_img
 
 
@@ -67,16 +78,15 @@ def main(width, disp_width, disp_source, horizontal):
 	soft_config = tf.ConfigProto(allow_soft_placement=True)
 	soft_config.gpu_options.allow_growth = True
 	with g.as_default(), g.device(device_t), tf.Session(config=soft_config) as sess:	
-		
 		cam = cv2.VideoCapture(0)
-		cam_width, cam_height = cam.get(cv2.cv.CV_CAP_PROP_FRAME_WIDTH), cam.get(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT)
-
+		cam_width, cam_height = get_camera_shape(cam)
 		width = width if width % 4 == 0 else width + 4 - (width % 4) # must be divisible by 4
 		height = int(width * float(cam_height/cam_width))
 		height = height if height % 4 == 0 else height + 4 - (height % 4) # must be divisible by 4
 		img_shape = (height, width, 3)
 		batch_shape = (1,) + img_shape
-		print("batch shape",batch_shape)
+		print("batch shape", batch_shape)
+		print("disp source is ", display_source)
 		img_placeholder = tf.placeholder(tf.float32, shape=batch_shape, name='img_placeholder')
 		preds = transform.net(img_placeholder)
 		
@@ -96,7 +106,8 @@ def main(width, disp_width, disp_source, horizontal):
 			output = output[:, :, :, [2,1,0]].reshape(img_shape)
 			output = np.clip(output, 0, 255).astype(np.uint8)
 			output = cv2.resize(output, (width, height))
-			if disp_source:
+
+      if disp_source:
 				full_img = make_triptych(disp_width, frame, style, output, horizontal)
 				cv2.imshow('frame', full_img)
 			else:
@@ -108,7 +119,7 @@ def main(width, disp_width, disp_source, horizontal):
 			if key_ == 27:
 				break
 			elif key_ == ord('a'):
-				idx_model = (idx_model +len(models) - 1) % len(models)
+				idx_model = (idx_model + len(models) - 1) % len(models)
 				print("load %d / %d : %s " % (idx_model, len(models), models[idx_model]))
 				load_checkpoint(models[idx_model]["ckpt"], sess)
 				style = cv2.imread(models[idx_model]["style"])
