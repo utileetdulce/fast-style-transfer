@@ -25,9 +25,10 @@ models=[{"ckpt":"models/ckpt_cubist_b20_e4_cw05/fns.ckpt", "style":"styles/cubis
 
 # parser
 parser = argparse.ArgumentParser()
-parser.add_argument('--width', type=int, help='width to resize camera feed to (default 320)', required=False, default=320)
-parser.add_argument('--disp_width', type=int, help='width to display output (default 640)', required=False, default=640)
-parser.add_argument('--disp_source', type=int, help='whether to display content and style images next to output, default 1', required=True, default=1)
+parser.add_argument('--device_id', type=int, help='camera device id (default 0)', required=False, default=0)
+parser.add_argument('--width', type=int, help='width to resize camera feed to (default 320)', required=False, default=640)
+parser.add_argument('--disp_width', type=int, help='width to display output (default 640)', required=False, default=1200)
+parser.add_argument('--disp_source', type=int, help='whether to display content and style images next to output, default 1', required=False, default=1)
 parser.add_argument('--horizontal', type=int, help='whether to concatenate horizontally (1) or vertically(0)', required=False, default=1)
 
 
@@ -71,14 +72,14 @@ def make_triptych(disp_width, frame, style, output, horizontal=True):
 	return full_img
 
 
-def main(width, disp_width, disp_source, horizontal):
+def main(device_id, width, disp_width, disp_source, horizontal):
 	idx_model = 0
 	device_t='/gpu:0'
 	g = tf.Graph()
 	soft_config = tf.ConfigProto(allow_soft_placement=True)
 	soft_config.gpu_options.allow_growth = True
 	with g.as_default(), g.device(device_t), tf.Session(config=soft_config) as sess:	
-		cam = cv2.VideoCapture(0)
+		cam = cv2.VideoCapture(device_id)
 		cam_width, cam_height = get_camera_shape(cam)
 		width = width if width % 4 == 0 else width + 4 - (width % 4) # must be divisible by 4
 		height = int(width * float(cam_height/cam_width))
@@ -98,7 +99,7 @@ def main(width, disp_width, disp_source, horizontal):
 		while True:
 			ret, frame = cam.read()
 			frame = cv2.resize(frame, (width, height))
-			#frame = cv2.flip(frame, 0)
+			frame = cv2.flip(frame, 1)
 			X = np.zeros(batch_shape, dtype=np.float32)
 			X[0] = frame
 			
@@ -136,5 +137,5 @@ def main(width, disp_width, disp_source, horizontal):
 
 if __name__ == '__main__':
 	opts = parser.parse_args()
-	main(opts.width, opts.disp_width, opts.disp_source==1, opts.horizontal==1)
+	main(opts.device_id, opts.width, opts.disp_width, opts.disp_source==1, opts.horizontal==1)
 
