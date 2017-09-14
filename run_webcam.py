@@ -8,9 +8,10 @@ import numpy as np
 import transform, vgg, pdb, os
 import tensorflow as tf
 import cv2
+from datetime import datetime
 
 
-models=[{"ckpt":"models/ckpt_cubist_b20_e4_cw05/fns.ckpt", "style":"styles/cubist-landscape-justineivu-geanina.jpg"},
+models_all=[{"ckpt":"models/ckpt_cubist_b20_e4_cw05/fns.ckpt", "style":"styles/cubist-landscape-justineivu-geanina.jpg"},
 	{"ckpt":"models/ckpt_hokusai_b20_e4_cw15/fns.ckpt", "style":"styles/hokusai.jpg"},
 	{"ckpt":"models/wave/wave.ckpt", "style":"styles/hokusai.jpg"},
 	{"ckpt":"models/ckpt_kandinsky_b20_e4_cw05/fns.ckpt", "style":"styles/kandinsky2.jpg"},
@@ -23,6 +24,17 @@ models=[{"ckpt":"models/ckpt_cubist_b20_e4_cw05/fns.ckpt", "style":"styles/cubis
 	{"ckpt":"models/ckpt_clouds_b5_e2_cw05_tv1_04/fns.ckpt", "style":"styles/clouds.jpg"}]
 
 
+models=[{"ckpt":"models/ckpt_cubist_b20_e4_cw05/fns.ckpt", "style":"styles/cubist-landscape-justineivu-geanina.jpg"},
+	{"ckpt":"models/ckpt_hokusai_b20_e4_cw15/fns.ckpt", "style":"styles/hokusai.jpg"},
+	{"ckpt":"models/ckpt_kandinsky_b20_e4_cw05/fns.ckpt", "style":"styles/kandinsky2.jpg"},
+	{"ckpt":"models/ckpt_liechtenstein_b20_e4_cw15/fns.ckpt", "style":"styles/liechtenstein.jpg"},
+	{"ckpt":"models/ckpt_wu_b20_e4_cw15/fns.ckpt", "style":"styles/wu4.jpg"},
+	{"ckpt":"models/ckpt_elsalahi_b20_e4_cw05/fns.ckpt", "style":"styles/elsalahi2.jpg"},
+	{"ckpt":"models/scream/scream.ckpt", "style":"styles/the_scream.jpg"},
+	{"ckpt":"models/udnie/udnie.ckpt", "style":"styles/udnie.jpg"},
+	{"ckpt":"models/ckpt_maps3_b5_e2_cw10_tv1_02/fns.ckpt", "style":"styles/maps3.jpg"}]
+
+
 # parser
 parser = argparse.ArgumentParser()
 parser.add_argument('--device_id', type=int, help='camera device id (default 0)', required=False, default=0)
@@ -30,6 +42,9 @@ parser.add_argument('--width', type=int, help='width to resize camera feed to (d
 parser.add_argument('--disp_width', type=int, help='width to display output (default 640)', required=False, default=1200)
 parser.add_argument('--disp_source', type=int, help='whether to display content and style images next to output, default 1', required=False, default=1)
 parser.add_argument('--horizontal', type=int, help='whether to concatenate horizontally (1) or vertically(0)', required=False, default=1)
+parser.add_argument('--num_sec', type=int, help='number of seconds to hold current model before going to next (-1 to disable)', required=False, default=-1)
+
+
 
 
 def load_checkpoint(checkpoint, sess):
@@ -72,7 +87,8 @@ def make_triptych(disp_width, frame, style, output, horizontal=True):
 	return full_img
 
 
-def main(device_id, width, disp_width, disp_source, horizontal):
+def main(device_id, width, disp_width, disp_source, horizontal, num_sec):
+	t1 = datetime.now()
 	idx_model = 0
 	device_t='/gpu:0'
 	g = tf.Graph()
@@ -80,6 +96,8 @@ def main(device_id, width, disp_width, disp_source, horizontal):
 	soft_config.gpu_options.allow_growth = True
 	with g.as_default(), g.device(device_t), tf.Session(config=soft_config) as sess:	
 		cam = cv2.VideoCapture(device_id)
+		cv2.namedWindow("frame", cv2.WND_PROP_FULLSCREEN)
+		cv2.setWindowProperty("frame", cv2.WND_PROP_FULLSCREEN, 1)
 		cam_width, cam_height = get_camera_shape(cam)
 		width = width if width % 4 == 0 else width + 4 - (width % 4) # must be divisible by 4
 		height = int(width * float(cam_height/cam_width))
@@ -129,7 +147,16 @@ def main(device_id, width, disp_width, disp_source, horizontal):
 				print("load %d / %d : %s " % (idx_model, len(models), models[idx_model]))
 				load_checkpoint(models[idx_model]["ckpt"], sess)
 				style = cv2.imread(models[idx_model]["style"])
-		
+
+			t2 = datetime.now()
+			dt = t2-t1
+			if num_sec>0 and dt.seconds > num_sec:
+				t1 = datetime.now()
+				idx_model = (idx_model + 1) % len(models)
+				print("load %d / %d : %s " % (idx_model, len(models), models[idx_model]))
+				load_checkpoint(models[idx_model]["ckpt"], sess)
+				style = cv2.imread(models[idx_model]["style"])
+
 		# done
 		cam.release()
 		cv2.destroyAllWindows()
@@ -137,5 +164,5 @@ def main(device_id, width, disp_width, disp_source, horizontal):
 
 if __name__ == '__main__':
 	opts = parser.parse_args()
-	main(opts.device_id, opts.width, opts.disp_width, opts.disp_source==1, opts.horizontal==1)
+	main(opts.device_id, opts.width, opts.disp_width, opts.disp_source==1, opts.horizontal==1, opts.num_sec),
 
