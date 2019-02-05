@@ -1,4 +1,4 @@
-name: ESRGAN
+name: fast-style-transfer
 description: Fast Style Transfer
 license: Copyright (c) 2016 Logan Engstrom
 base: python3.5
