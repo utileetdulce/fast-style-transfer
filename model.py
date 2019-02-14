@@ -56,7 +56,7 @@ def setup(alpha=0.5):
 
 
 @faststyletransfer.command('convert', inputs={'image': 'image'}, outputs={'output': 'image'})
-def upscale(sess, inp):
+def convert(sess, inp):
     img = np.array(inp['image'])
     img = np.expand_dims(img, 0)
     output = sess.run(preds, feed_dict={img_placeholder: img})

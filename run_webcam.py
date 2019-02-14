@@ -61,7 +61,7 @@ def load_checkpoint(checkpoint, sess):
 def get_camera_shape(cam):
 	""" use a different syntax to get video size in OpenCV 2 and OpenCV 3 """
 	cv_version_major, _, _ = cv2.__version__.split('.')
-	if cv_version_major == '3':
+	if cv_version_major == '3' or cv_version_major == '4':
 		return cam.get(cv2.CAP_PROP_FRAME_WIDTH), cam.get(cv2.CAP_PROP_FRAME_HEIGHT)
 	else:
 		return cam.get(cv2.cv.CV_CAP_PROP_FRAME_WIDTH), cam.get(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT)
