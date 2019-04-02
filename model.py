@@ -35,7 +35,7 @@ def load_checkpoint(checkpoint, sess):
 		return False
 
 
-@faststyletransfer.setup
+@faststyletransfer.setup(options={})
 def setup(alpha=0.5):
     global sess
     global img_placeholder
@@ -55,14 +55,15 @@ def setup(alpha=0.5):
     return sess
 
 
-@faststyletransfer.command('convert', inputs={'image': 'image'}, outputs={'output': 'image'})
+@faststyletransfer.command(name='convert', inputs={'image': 'image'}, outputs={'output': 'image'})
 def convert(sess, inp):
-    img = np.array(inp['image'])
-    img = np.expand_dims(img, 0)
-    output = sess.run(preds, feed_dict={img_placeholder: img})
-    output = np.clip(output[0], 0, 255).astype(np.uint8)
-    return dict(output=output)
+	img = np.array(inp['image'])
+	img = np.expand_dims(img, 0)
+	output = sess.run(preds, feed_dict={img_placeholder: img})
+	output = np.clip(output[0], 0, 255).astype(np.uint8)
+	return dict(output=output)
 
 
 if __name__ == '__main__':
-    faststyletransfer.run()
+	faststyletransfer.run()
+

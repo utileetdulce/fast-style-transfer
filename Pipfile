@@ -9,7 +9,7 @@ verify_ssl = true
 tensorflow-gpu = "*"
 opencv-python = "*"
 scipy = "*"
-runway-python = "==0.0.10"
+runway-python = "*"
 
 [requires]
 python_version = "3.5"
