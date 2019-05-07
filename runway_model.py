@@ -18,21 +18,19 @@ def load_checkpoint(checkpoint, sess):
         print("checkpoint %s not loaded correctly" % checkpoint)
         return False
 
+g = None
 
 @runway.setup(options={"checkpoint_path": runway.file(is_directory=True) })
 def setup(options):
     global sess
     global img_placeholder
     global preds
+    global g
     h, w = 480, 640
     img_shape = (h, w, 3)
     batch_shape = (1,) + img_shape
-    g = tf.Graph()
-    g.as_default()
-    g.device('/gpu:0')
-    soft_config = tf.ConfigProto(allow_soft_placement=True)
-    soft_config.gpu_options.allow_growth = True
-    sess = tf.Session(config=soft_config)
+    g = tf.get_default_graph()
+    sess = tf.Session(graph=g)
     img_placeholder = tf.placeholder(tf.float32, shape=batch_shape, name='img_placeholder')
     preds = transform.net(img_placeholder)
     load_checkpoint(os.path.join(options['checkpoint_path'], 'fns.ckpt'), sess)
@@ -43,7 +41,8 @@ def setup(options):
 def stylize(sess, inp):
     img = np.array(inp['image'].resize((640, 480)))
     img = np.expand_dims(img, 0)
-    output = sess.run(preds, feed_dict={img_placeholder: img})
+    with g.as_default():
+        output = sess.run(preds, feed_dict={img_placeholder: img})
     output = np.clip(output[0], 0, 255).astype(np.uint8)
     return dict(output=output)
 
