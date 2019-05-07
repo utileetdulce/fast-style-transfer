@@ -19,7 +19,7 @@ def load_checkpoint(checkpoint, sess):
         return False
 
 
-@runway.setup(options={"checkpoint_path": runway.text })
+@runway.setup(options={"checkpoint_path": runway.file(is_directory=True) })
 def setup(options):
     global sess
     global img_placeholder
