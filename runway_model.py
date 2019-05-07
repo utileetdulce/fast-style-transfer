@@ -41,7 +41,7 @@ def setup(options):
 
 @runway.command('convert', inputs={'image': runway.image}, outputs={'output': runway.image})
 def convert(sess, inp):
-    img = np.array(inp['image'].resize(640, 480))
+    img = np.array(inp['image'].resize((640, 480)))
     img = np.expand_dims(img, 0)
     output = sess.run(preds, feed_dict={img_placeholder: img})
     output = np.clip(output[0], 0, 255).astype(np.uint8)
