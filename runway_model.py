@@ -35,12 +35,12 @@ def setup(options):
     sess = tf.Session(config=soft_config)
     img_placeholder = tf.placeholder(tf.float32, shape=batch_shape, name='img_placeholder')
     preds = transform.net(img_placeholder)
-    load_checkpoint(options['checkpoint_path'], sess)
+    load_checkpoint(os.path.join(options['checkpoint_path'], 'fns.ckpt'), sess)
     return sess
 
 
-@runway.command('convert', inputs={'image': runway.image}, outputs={'output': runway.image})
-def convert(sess, inp):
+@runway.command('stylize', inputs={'image': runway.image}, outputs={'output': runway.image})
+def stylize(sess, inp):
     img = np.array(inp['image'].resize((640, 480)))
     img = np.expand_dims(img, 0)
     output = sess.run(preds, feed_dict={img_placeholder: img})
@@ -49,5 +49,5 @@ def convert(sess, inp):
 
 
 if __name__ == '__main__':
-    runway.run()
+    runway.run(model_options={'checkpoint_path': 'models/Cubist'})
 
