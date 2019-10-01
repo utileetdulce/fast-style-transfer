@@ -6,6 +6,7 @@ import pdb
 import numpy as np
 import transform, vgg, pdb, os
 import tensorflow as tf
+from PIL import Image
 import runway
 
 
@@ -39,11 +40,14 @@ def setup(options):
 
 @runway.command('stylize', inputs={'image': runway.image}, outputs={'output': runway.image})
 def stylize(sess, inp):
-    img = np.array(inp['image'])
+    img = inp['image']
+    original_size = img.size
+    img = np.array(img.resize((640, 480)))
     img = np.expand_dims(img, 0)
     with g.as_default():
         output = sess.run(preds, feed_dict={img_placeholder: img})
     output = np.clip(output[0], 0, 255).astype(np.uint8)
+    output = Image.fromarray(output).resize(original_size)
     return dict(output=output)
 
 
