@@ -39,7 +39,7 @@ def setup(options):
 
 @runway.command('stylize', inputs={'image': runway.image}, outputs={'output': runway.image})
 def stylize(sess, inp):
-    img = np.array(inp['image'].resize((640, 480)))
+    img = np.array(inp['image'])
     img = np.expand_dims(img, 0)
     with g.as_default():
         output = sess.run(preds, feed_dict={img_placeholder: img})
