@@ -38,9 +38,14 @@ def setup(options):
     return sess
 
 
-@runway.command('stylize', inputs={'image': runway.image}, outputs={'output': runway.image})
+@runway.command('stylize',
+    inputs={'image': runway.image(channels=4), 'background_image': runway.image(channels=4)},
+    outputs={'output': runway.image(channels=4)})
 def stylize(sess, inp):
     img = inp['image']
+    background_image = inp['background_image'].resize(img.size)
+    alpha_mask = img.getchannel("A")
+    img = img.convert('RGB')
     original_size = img.size
     img = np.array(img.resize((640, 480)))
     img = np.expand_dims(img, 0)
@@ -48,9 +53,11 @@ def stylize(sess, inp):
         output = sess.run(preds, feed_dict={img_placeholder: img})
     output = np.clip(output[0], 0, 255).astype(np.uint8)
     output = Image.fromarray(output).resize(original_size)
-    return dict(output=output)
+    output.putalpha(alpha_mask)
+    composite = Image.alpha_composite(background_image, output)
+    return dict(output=composite)
 
 
 if __name__ == '__main__':
-    runway.run(model_options={'checkpoint_path': 'models/Cubist'})
+    runway.run(model_options={'checkpoint_path': 'models/ckpt_hokusai_b20_e4_cw15'})
 

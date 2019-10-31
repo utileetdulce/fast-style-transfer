@@ -1,3 +1,7 @@
+## Runwayml model with an image compositing feature
+
+This is a fork of [fast-style-transfer](https://github.com/agermanidis/fast-style-transfer) (which was ported to Runwayml). This fork adds an image compositing feature. 
+
 ## fast-style-transfer webcam script
 
 This is a fork of [fast-style-transfer](https://github.com/lengstrom/fast-style-transfer) which has an additional script, `run_webcam.py` to apply style models live to a webcam stream. Go to the README of the original page for instructions on how to train your own models, apply them to images and movies, and all the original functionality of that repository.
